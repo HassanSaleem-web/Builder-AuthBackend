@@ -1,47 +1,52 @@
 import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+dotenv.config(); // must be before imports using env vars
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
+import stripeRoutes from "./routes/stripeRoutes.js";
 
-// Load environment variables
-dotenv.config();
+
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
-// ─────────────────────────────────────────────
-// 🧩 MIDDLEWARE
-// ─────────────────────────────────────────────
+// ⚙️ Core middleware
 app.use(cors({
-  origin: CLIENT_URL,
+  origin: process.env.CLIENT_URL,
   credentials: true,
 }));
+
+// Stripe webhook requires RAW body — must be before express.json()
+app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
+
+// Normal JSON parser for all other routes
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
-// ─────────────────────────────────────────────
-// 🔗 ROUTES
-// ─────────────────────────────────────────────
+// 🔐 Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/stripe", stripeRoutes);
 
-// ─────────────────────────────────────────────
-// 🔌 DATABASE & SERVER START
-// ─────────────────────────────────────────────
+// ✅ Database connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => {
-  console.log("✅ Connected to MongoDB");
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Auth server running at http://localhost:${PORT}`);
-    console.log(`🌐 CORS enabled for ${CLIENT_URL}`);
-  });
-})
-.catch(err => {
-  console.error("❌ MongoDB connection error:", err.message);
+// 🟢 Health check endpoint
+app.get("/", (req, res) => {
+  res.send("Server is running...");
 });
+
+// 🧾 Global error handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+// 🚀 Start server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`🌍 Server running on port ${PORT}`));

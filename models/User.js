@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
     },
     subscription: {
       type: String,
-      enum: ["free", "basic", "premium"],
+      enum: ["free", "starter", "Most Popular","Best Value"],
       default: "free",
     },
     creditsLeft: {

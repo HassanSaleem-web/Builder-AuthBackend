@@ -65,6 +65,7 @@
     "setprototypeof": "^1.2.0",
     "sparse-bitfield": "^3.0.3",
     "statuses": "^2.0.2",
+    "stripe": "^19.1.0",
     "toidentifier": "^1.0.1",
     "type-is": "^2.0.1",
     "unpipe": "^1.0.0",
