@@ -12,9 +12,9 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const planMap = {
-  pack_10: { amount: 1000, credits: 50 },
-  pack_50: { amount: 5000, credits: 270 },
-  pack_100: { amount: 10000, credits: 600 },
+  pack_10: { amount: 10, credits: 50 },
+  pack_50: { amount: 50, credits: 270 },
+  pack_100: { amount: 100, credits: 600 },
 };
 
 export const createCheckoutSession = async (req, res) => {
