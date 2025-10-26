@@ -1,6 +1,6 @@
 // controllers/stripeController.js
 import dotenv from "dotenv";
-dotenv.config(); // make sure .env is loaded before using process.env
+dotenv.config();
 
 import Stripe from "stripe";
 import User from "../models/User.js";
@@ -11,12 +11,14 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.error("❌ Stripe secret key is missing from .env");
 }
 
+// 🧮 Map of available plans
 const planMap = {
-  pack_10: { amount: 1000, credits: 50 },
-  pack_50: { amount: 5000, credits: 270 },
-  pack_100: { amount: 10000, credits: 600 },
+  pack_10: { amount: 1000, credits: 50, tier: "starter" },
+  pack_50: { amount: 5000, credits: 270, tier: "Most Popular" },
+  pack_100: { amount: 10000, credits: 600, tier: "Best Value" },
 };
 
+// 🧾 Create Stripe checkout session
 export const createCheckoutSession = async (req, res) => {
   try {
     const { planId, userId } = req.body;
@@ -48,6 +50,7 @@ export const createCheckoutSession = async (req, res) => {
   }
 };
 
+// 💳 Handle Stripe webhook events
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -59,7 +62,7 @@ export const handleStripeWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error("Webhook signature error:", err.message);
+    console.error("❌ Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -69,10 +72,24 @@ export const handleStripeWebhook = async (req, res) => {
     const plan = planMap[planId];
 
     if (userId && plan) {
-      await User.findByIdAndUpdate(userId, {
-        $inc: { creditsLeft: plan.credits },
-      });
-      console.log(`✅ Added ${plan.credits} credits to user ${userId}`);
+      try {
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            $inc: { creditsLeft: plan.credits },
+            subscription: plan.tier,
+          },
+          { new: true }
+        );
+
+        console.log(
+          `✅ User ${updatedUser.username} (${userId}) upgraded to ${plan.tier}, added ${plan.credits} credits.`
+        );
+      } catch (updateErr) {
+        console.error("❌ Error updating user credits:", updateErr.message);
+      }
+    } else {
+      console.warn("⚠️ Missing userId or plan in session metadata.");
     }
   }
 
