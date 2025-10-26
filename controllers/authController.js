@@ -36,7 +36,7 @@ export const registerUser = async (req, res) => {
       .json({
         message: "User registered successfully.",
         user: {
-          id: newUser._id,
+          _id: newUser._id, // ✅ fixed key
           username: newUser.username,
           email: newUser.email,
           subscription: newUser.subscription,
@@ -71,7 +71,7 @@ export const loginUser = async (req, res) => {
       .json({
         message: "Login successful.",
         user: {
-          id: user._id,
+          _id: user._id, // ✅ fixed key
           username: user.username,
           email: user.email,
           subscription: user.subscription,
@@ -99,7 +99,8 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
-// Deduct credits from user account
+
+// 💳 Deduct credits
 export const deductCredits = async (req, res) => {
   try {
     const { userId, amount } = req.body;
@@ -111,7 +112,6 @@ export const deductCredits = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Prevent going below zero
     user.creditsLeft = Math.max(0, user.creditsLeft - amount);
     await user.save();
 
