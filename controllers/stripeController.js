@@ -52,26 +52,34 @@ export const createCheckoutSession = async (req, res) => {
 
 // 💳 Handle Stripe webhook events
 export const handleStripeWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    console.error("❌ Webhook signature error:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const { userId, planId } = session.metadata || {};
-    const plan = planMap[planId];
-
-    if (userId && plan) {
+    console.log("🔥 Webhook received:", new Date().toISOString());
+  
+    const sig = req.headers["stripe-signature"];
+    let event;
+  
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+      console.log("✅ Webhook event type:", event.type);
+    } catch (err) {
+      console.error("❌ Webhook signature error:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const { userId, planId } = session.metadata || {};
+      console.log("🟡 Metadata:", { userId, planId });
+  
+      const plan = planMap[planId];
+      if (!userId || !plan) {
+        console.warn("⚠️ Missing userId or planId in metadata");
+        return res.status(400).send("Invalid metadata");
+      }
+  
       try {
         const updatedUser = await User.findByIdAndUpdate(
           userId,
@@ -81,17 +89,19 @@ export const handleStripeWebhook = async (req, res) => {
           },
           { new: true }
         );
-
-        console.log(
-          `✅ User ${updatedUser.username} (${userId}) upgraded to ${plan.tier}, added ${plan.credits} credits.`
-        );
-      } catch (updateErr) {
-        console.error("❌ Error updating user credits:", updateErr.message);
+  
+        if (updatedUser) {
+          console.log(
+            `✅ User ${updatedUser.username}: +${plan.credits} credits, tier → ${plan.tier}`
+          );
+        } else {
+          console.warn("⚠️ User not found:", userId);
+        }
+      } catch (err) {
+        console.error("❌ Error updating user:", err.message);
       }
-    } else {
-      console.warn("⚠️ Missing userId or plan in session metadata.");
     }
-  }
-
-  res.status(200).json({ received: true });
-};
+  
+    res.status(200).json({ received: true });
+  };
+  
