@@ -25,8 +25,9 @@ app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 // 🔐 Routes
-app.use("/api/auth", authRoutes);
 app.use("/api/stripe", stripeRoutes);
+app.use("/api/auth", authRoutes);
+
 
 // ✅ Database connection
 mongoose.connect(process.env.MONGO_URI, {

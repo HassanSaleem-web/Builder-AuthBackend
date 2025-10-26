@@ -6,7 +6,7 @@ import {
 
 const router = express.Router();
 
-router.post("/create-session", createCheckoutSession);
+router.post("/create-checkout-session", createCheckoutSession);
 router.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
 export default router;
