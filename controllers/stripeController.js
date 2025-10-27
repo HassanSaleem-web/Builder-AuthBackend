@@ -82,13 +82,13 @@ export const handleStripeWebhook = async (req, res) => {
   
       try {
         const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            $inc: { creditsLeft: plan.credits },
-            subscription: plan.tier,
-          },
-          { new: true }
-        );
+            userId,
+            {
+              $set: { creditsLeft: plan.credits, subscription: plan.tier },
+            },
+            { new: true }
+          );
+          
   
         if (updatedUser) {
           console.log(
