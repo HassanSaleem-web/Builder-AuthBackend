@@ -91,14 +91,47 @@ export const logoutUser = async (req, res) => {
 
 // 👤 Get current user profile
 export const getUserProfile = async (req, res) => {
+  console.log("[getUserProfile] HIT", new Date().toISOString());
+  console.log("[getUserProfile] req.user:", req?.user); // should have { id } or { _id }
+
   try {
-    const user = await User.findById(req.user.id).select("-passwordHash");
-    if (!user) return res.status(404).json({ message: "User not found." });
-    res.json(user);
+    const userId = req?.user?.id || req?.user?._id;
+    console.log("[getUserProfile] derived userId:", userId);
+
+    if (!userId) {
+      console.warn("[getUserProfile] No user id on request. Headers snapshot:", {
+        hasAuthorization: Boolean(req.headers?.authorization),
+        hasCookie: Boolean(req.headers?.cookie),
+        origin: req.headers?.origin,
+      });
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    // Optional: confirm the DB/collection you’re hitting
+    try {
+      const conn = User?.db?.client?.s?.url || User?.db?.name;
+      console.log("[getUserProfile] DB connection info:", conn);
+    } catch (_) {}
+
+    const user = await User.findById(userId).select("-passwordHash");
+    console.log(
+      "[getUserProfile] query result:",
+      user ? { _id: user._id?.toString(), email: user.email } : null
+    );
+
+    if (!user) {
+      console.warn("[getUserProfile] User not found for id:", userId);
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    console.log("[getUserProfile] SUCCESS returning profile.");
+    return res.json(user);
   } catch (err) {
-    res.status(500).json({ message: "Internal server error." });
+    console.error("[getUserProfile] ERROR:", err?.message, err?.stack);
+    return res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 // 💳 Deduct credits
 export const deductCredits = async (req, res) => {
