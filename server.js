@@ -18,7 +18,10 @@ const app = express();
 // ⚙️ Core middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: [
+      "http://localhost:5173",                // for local dev
+      "https://builderassistant-3ml1.onrender.com" // your deployed frontend
+    ],
     credentials: true,
   })
 );
