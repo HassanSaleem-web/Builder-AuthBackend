@@ -19,19 +19,21 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",                // for local dev
-      "https://builderassistant-3ml1.onrender.com" // your deployed frontend
+      "http://localhost:5173",
+      "https://builderassistant-3ml1.onrender.com"
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// Stripe webhook requires RAW body — must be before express.json()
-app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 
 // Normal JSON parser for all other routes
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
+
+// Stripe webhook requires RAW body — must be before express.json()
+app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 
 // 🔐 Routes
 app.use("/api/stripe", stripeRoutes);
@@ -40,10 +42,7 @@ app.use("/api/chat", chatRoutes); // ✅ NEW
 app.use("/api/documents", documentRoutes);
 // ✅ Database connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
