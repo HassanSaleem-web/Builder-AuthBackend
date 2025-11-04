@@ -24,8 +24,7 @@ export const registerUser = async (req, res) => {
       creditsLeft: 15,
     });
 
-    const token = generateToken({ id: newUser._id });
-
+    const token = generateToken({ _id: newUser._id });
     res
       .cookie("token", token, {
         httpOnly: true,
@@ -60,7 +59,7 @@ export const loginUser = async (req, res) => {
     const valid = await comparePassword(password, user.passwordHash);
     if (!valid) return res.status(401).json({ message: "Invalid credentials." });
 
-    const token = generateToken({ id: user._id });
+    const token = generateToken({ _id: user._id });
 
     res
       .cookie("token", token, {
