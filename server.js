@@ -36,7 +36,7 @@ app.use(cookieParser());
 
 
 // 🔐 Routes
-
+app.use("/api/stripe", stripeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes); // ✅ NEW
 app.use("/api/documents", documentRoutes);
