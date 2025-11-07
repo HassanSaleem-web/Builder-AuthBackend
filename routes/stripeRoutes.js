@@ -6,9 +6,10 @@ import {
 
 const router = express.Router();
 
+// ✅ Normal routes use JSON parsing
 router.post("/create-checkout-session", createCheckoutSession);
 
-// 👇 add raw parser here (specific to webhook)
+// ✅ Webhook route must use raw body for signature verification
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
