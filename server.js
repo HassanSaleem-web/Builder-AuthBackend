@@ -33,7 +33,7 @@ app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 // Stripe webhook requires RAW body — must be before express.json()
-app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
+
 
 // 🔐 Routes
 
@@ -60,3 +60,4 @@ app.use((err, req, res, next) => {
 // 🚀 Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🌍 Server running on port ${PORT}`));
+
