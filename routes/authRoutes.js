@@ -4,6 +4,9 @@ import {
   loginUser,
   logoutUser,
   getUserProfile,
+  getAllUsers,
+  deleteUserById,
+  adminUpdateUser
 } from "../controllers/authController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { deductCredits } from "../controllers/authController.js";
@@ -20,4 +23,12 @@ router.post("/login", loginUser);
 router.post("/logout", authMiddleware, logoutUser);
 router.get("/me", authMiddleware, getUserProfile);
 router.put("/deduct-credits", deductCredits);
+// Admin: list all users (currently no auth; protect later if needed)
+router.get("/users", getAllUsers);
+// Admin: delete any user
+router.delete("/user/:id", deleteUserById);
+// Admin: update credits & subscription
+router.put("/admin/user/:id/update", adminUpdateUser);
+
+
 export default router;

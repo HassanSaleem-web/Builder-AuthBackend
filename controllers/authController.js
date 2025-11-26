@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
-
+import Document from "../models/Document.js";
 // 🧩 Register new user
 export const registerUser = async (req, res) => {
   try {
@@ -160,5 +160,78 @@ export const deductCredits = async (req, res) => {
   } catch (err) {
     console.error("Error deducting credits:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+// 🧩 Admin: get all users (for admin panel)
+export const getAllUsers = async (req, res) => {
+  try {
+    // Exclude password hash from results
+    const users = await User.find().select("-password");
+
+    return res.json(users);
+  } catch (err) {
+    console.error("Error fetching all users:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+// 🗑️ ADMIN: Delete a user completely
+export const deleteUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Delete user from DB
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Optional: delete user documents
+    await Document.deleteMany({ user: userId });
+
+    // Optional: delete chat history
+    // If chat is embedded with the user, it gets removed already
+    // If chat is a separate model, delete here.
+
+    return res.json({ message: "User deleted successfully" });
+
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+// 🛠️ ADMIN: Update user's credits and/or subscription
+export const adminUpdateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { creditsLeft, subscription } = req.body;
+
+    if (!creditsLeft && !subscription) {
+      return res.status(400).json({
+        message: "No fields provided to update."
+      });
+    }
+
+    const updateFields = {};
+    if (creditsLeft !== undefined) updateFields.creditsLeft = creditsLeft;
+    if (subscription !== undefined) updateFields.subscription = subscription;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      message: "User updated successfully",
+      user: updatedUser
+    });
+
+  } catch (err) {
+    console.error("Error updating user:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
